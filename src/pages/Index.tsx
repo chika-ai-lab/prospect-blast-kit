@@ -124,15 +124,17 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4 max-w-6xl">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Mail className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Envoi d'Emails Personnalisés</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto py-12 px-4 max-w-6xl">
+        <div className="mb-12 text-center animate-fade-in">
+          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/10 mb-4">
+            <Mail className="h-10 w-10 text-primary" />
           </div>
-          <p className="text-muted-foreground">
-            Importez un fichier Excel et envoyez des emails personnalisés à vos contacts
+          <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Envoi d'Emails Personnalisés
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Importez un fichier Excel et envoyez des emails personnalisés à vos contacts en quelques clics
           </p>
         </div>
 
@@ -144,9 +146,14 @@ const Index = () => {
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold mb-4">1. Importer le fichier Excel</h2>
+        <div className="space-y-8">
+          <div className="animate-fade-in">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                1
+              </div>
+              <h2 className="text-2xl font-semibold">Importer le fichier Excel</h2>
+            </div>
             <FileUpload
               onFileSelect={handleFileSelect}
               selectedFile={file}
@@ -156,13 +163,23 @@ const Index = () => {
 
           {excelData.length > 0 && (
             <>
-              <div>
-                <h2 className="text-xl font-semibold mb-4">2. Aperçu des données</h2>
+              <div className="animate-fade-in">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                    2
+                  </div>
+                  <h2 className="text-2xl font-semibold">Aperçu des données</h2>
+                </div>
                 <DataPreview data={excelData} columns={columns} />
               </div>
 
-              <div>
-                <h2 className="text-xl font-semibold mb-4">3. Personnaliser le message</h2>
+              <div className="animate-fade-in">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                    3
+                  </div>
+                  <h2 className="text-2xl font-semibold">Personnaliser le message</h2>
+                </div>
                 <MessageEditor
                   subject={subject}
                   message={message}
@@ -172,19 +189,26 @@ const Index = () => {
                 />
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-center animate-fade-in">
                 <Button
                   onClick={handleSendEmails}
                   disabled={isSending || !subject || !message}
                   size="lg"
+                  className="px-12 py-6 text-lg shadow-glow hover:shadow-xl transition-all duration-300"
                 >
+                  <Mail className="mr-2 h-5 w-5" />
                   {isSending ? 'Envoi en cours...' : `Envoyer ${excelData.length} email(s)`}
                 </Button>
               </div>
 
               {(isSending || sendResults.length > 0) && (
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">4. Résultats de l'envoi</h2>
+                <div className="animate-fade-in">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                      4
+                    </div>
+                    <h2 className="text-2xl font-semibold">Résultats de l'envoi</h2>
+                  </div>
                   <SendProgress
                     totalEmails={excelData.length}
                     sentCount={sentCount}

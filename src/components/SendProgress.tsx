@@ -1,7 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface SendResult {
   email: string;
@@ -22,56 +21,72 @@ export const SendProgress = ({
   results,
   isComplete,
 }: SendProgressProps) => {
+  const progress = (sentCount / totalEmails) * 100;
   const successCount = results.filter((r) => r.status === 'success').length;
   const errorCount = results.filter((r) => r.status === 'error').length;
-  const progress = totalEmails > 0 ? (sentCount / totalEmails) * 100 : 0;
 
   return (
-    <Card className="p-6 space-y-4">
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold">
-            {isComplete ? 'Envoi terminé' : 'Envoi en cours...'}
-          </h3>
-          <span className="text-sm text-muted-foreground">
+    <Card className="p-6 space-y-6 bg-gradient-to-br from-card to-muted/20 shadow-lg border-primary/10">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-xl font-semibold">Progression</h3>
+        <div className="flex items-center gap-2">
+          {!isComplete && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+          <span className="text-lg font-bold text-primary">
             {sentCount} / {totalEmails}
           </span>
         </div>
-        <Progress value={progress} className="h-2" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-5 w-5 text-green-600" />
-          <span className="text-sm">
-            <strong>{successCount}</strong> réussis
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <XCircle className="h-5 w-5 text-destructive" />
-          <span className="text-sm">
-            <strong>{errorCount}</strong> échoués
-          </span>
-        </div>
+      <div className="space-y-2">
+        <Progress value={progress} className="h-3" />
+        <p className="text-xs text-muted-foreground text-right">{Math.round(progress)}%</p>
       </div>
 
-      {results.length > 0 && (
-        <ScrollArea className="h-[200px] border rounded-md p-4">
-          <div className="space-y-2">
+      {isComplete && (
+        <div className="pt-4 border-t border-border/50">
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+              <div className="p-2 rounded-lg bg-green-500/20">
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-600">{successCount}</p>
+                <p className="text-sm text-muted-foreground">Réussis</p>
+              </div>
+            </div>
+            {errorCount > 0 && (
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                <div className="p-2 rounded-lg bg-destructive/20">
+                  <XCircle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-destructive">{errorCount}</p>
+                  <p className="text-sm text-muted-foreground">Échoués</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2 max-h-80 overflow-auto pr-2">
+            <p className="text-sm font-semibold mb-3 text-muted-foreground">Détails :</p>
             {results.map((result, index) => (
               <div
                 key={index}
-                className="flex items-start gap-2 text-sm"
+                className={`flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 hover:scale-[1.01] ${
+                  result.status === 'success'
+                    ? 'bg-green-500/5 border-green-500/20'
+                    : 'bg-destructive/5 border-destructive/20'
+                }`}
               >
                 {result.status === 'success' ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                 ) : (
-                  <XCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                  <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{result.email}</p>
+                  <p className="text-sm font-semibold truncate">{result.email}</p>
                   {result.message && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {result.message}
                     </p>
                   )}
@@ -79,13 +94,6 @@ export const SendProgress = ({
               </div>
             ))}
           </div>
-        </ScrollArea>
-      )}
-
-      {!isComplete && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Envoi des emails en cours...</span>
         </div>
       )}
     </Card>
