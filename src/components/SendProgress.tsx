@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CheckCircle2, XCircle, Loader2, RotateCcw, Download } from 'lucide-react';
 
 interface SendResult {
   email: string;
@@ -13,6 +14,8 @@ interface SendProgressProps {
   sentCount: number;
   results: SendResult[];
   isComplete: boolean;
+  onRetry?: () => void;
+  onExportCSV?: () => void;
 }
 
 export const SendProgress = ({
@@ -20,6 +23,8 @@ export const SendProgress = ({
   sentCount,
   results,
   isComplete,
+  onRetry,
+  onExportCSV,
 }: SendProgressProps) => {
   const progress = (sentCount / totalEmails) * 100;
   const successCount = results.filter((r) => r.status === 'success').length;
@@ -64,6 +69,30 @@ export const SendProgress = ({
                   <p className="text-sm text-muted-foreground">Échoués</p>
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* Boutons d'action */}
+          <div className="flex gap-3 mb-4">
+            {errorCount > 0 && onRetry && (
+              <Button
+                onClick={onRetry}
+                variant="outline"
+                className="flex-1 border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/10"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reprendre ({errorCount} échec{errorCount > 1 ? "s" : ""})
+              </Button>
+            )}
+            {onExportCSV && (
+              <Button
+                onClick={onExportCSV}
+                variant="outline"
+                className="flex-1 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Exporter en CSV
+              </Button>
             )}
           </div>
 

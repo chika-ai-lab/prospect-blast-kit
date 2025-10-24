@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui/card';
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -6,7 +6,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 
 interface DataPreviewProps {
   data: any[];
@@ -22,7 +22,8 @@ export const DataPreview = ({ data, columns }: DataPreviewProps) => {
         <div>
           <h3 className="text-xl font-semibold mb-1">Aperçu des données</h3>
           <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-primary">{data.length}</span> contact(s) trouvé(s) • Affichage des 5 premiers
+            <span className="font-semibold text-primary">{data.length}</span>{" "}
+            contact(s) trouvé(s) • Affichage des 5 premiers
           </p>
         </div>
       </div>
@@ -32,7 +33,10 @@ export const DataPreview = ({ data, columns }: DataPreviewProps) => {
           <TableHeader>
             <TableRow className="bg-muted/50">
               {columns.map((column) => (
-                <TableHead key={column} className="font-semibold text-foreground">
+                <TableHead
+                  key={column}
+                  className="font-semibold text-foreground"
+                >
                   {column}
                 </TableHead>
               ))}
@@ -40,10 +44,15 @@ export const DataPreview = ({ data, columns }: DataPreviewProps) => {
           </TableHeader>
           <TableBody>
             {previewData.map((row, index) => (
-              <TableRow key={index} className="hover:bg-muted/30 transition-colors">
+              <TableRow
+                key={index}
+                className="hover:bg-muted/30 transition-colors"
+              >
                 {columns.map((column) => (
                   <TableCell key={column} className="font-medium">
-                    {row[column] || <span className="text-muted-foreground">-</span>}
+                    {row[column] || (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
