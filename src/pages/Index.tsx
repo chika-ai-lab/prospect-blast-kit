@@ -422,6 +422,7 @@ const Index = () => {
         : undefined;
 
       try {
+        console.log(config.apiUrl);
         // Appel à l'API backend
         const response = await fetch(`${config.apiUrl}/send-email`, {
           method: "POST",
