@@ -1,26 +1,26 @@
-import { useState } from 'react';
-import { FileUpload } from '@/components/FileUpload';
-import { MessageEditor } from '@/components/MessageEditor';
-import { DataPreview } from '@/components/DataPreview';
-import { SendProgress } from '@/components/SendProgress';
-import { Button } from '@/components/ui/button';
-import { parseExcelFile, replaceVariables } from '@/lib/excelParser';
-import { useToast } from '@/hooks/use-toast';
-import { Mail, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useState } from "react";
+import { FileUpload } from "@/components/FileUpload";
+import { MessageEditor } from "@/components/MessageEditor";
+import { DataPreview } from "@/components/DataPreview";
+import { SendProgress } from "@/components/SendProgress";
+import { Button } from "@/components/ui/button";
+import { ExcelRow, parseExcelFile, replaceVariables } from "@/lib/excelParser";
+import { useToast } from "@/hooks/use-toast";
+import { Mail, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SendResult {
   email: string;
-  status: 'success' | 'error';
+  status: "success" | "error";
   message?: string;
 }
 
 const Index = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [excelData, setExcelData] = useState<any[]>([]);
+  const [excelData, setExcelData] = useState<ExcelRow[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendResults, setSendResults] = useState<SendResult[]>([]);
   const [sentCount, setSentCount] = useState(0);
@@ -34,14 +34,17 @@ const Index = () => {
       setExcelData(data.rows);
       setColumns(data.columns);
       toast({
-        title: 'Fichier chargé',
+        title: "Fichier chargé",
         description: `${data.rows.length} contact(s) trouvé(s)`,
       });
     } catch (error) {
       toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Erreur de lecture du fichier',
-        variant: 'destructive',
+        title: "Erreur",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Erreur de lecture du fichier",
+        variant: "destructive",
       });
     }
   };
@@ -58,23 +61,24 @@ const Index = () => {
   const handleSendEmails = async () => {
     if (!excelData.length || !subject || !message) {
       toast({
-        title: 'Information manquante',
-        description: 'Veuillez remplir tous les champs',
-        variant: 'destructive',
+        title: "Information manquante",
+        description: "Veuillez remplir tous les champs",
+        variant: "destructive",
       });
       return;
     }
 
     // Vérifier qu'il y a une colonne email
-    const hasEmailColumn = columns.some(col => 
-      col.toLowerCase().includes('email') || col.toLowerCase() === 'mail'
+    const hasEmailColumn = columns.some(
+      (col) =>
+        col.toLowerCase().includes("email") || col.toLowerCase() === "mail"
     );
 
     if (!hasEmailColumn) {
       toast({
-        title: 'Colonne email manquante',
+        title: "Colonne email manquante",
         description: 'Votre fichier doit contenir une colonne "email"',
-        variant: 'destructive',
+        variant: "destructive",
       });
       return;
     }
@@ -86,29 +90,54 @@ const Index = () => {
 
     const results: SendResult[] = [];
 
-    // Simulation de l'envoi d'emails
-    // IMPORTANT: L'envoi réel nécessite une fonction backend pour sécuriser les identifiants SMTP
     for (let i = 0; i < excelData.length; i++) {
       const row = excelData[i];
-      const emailColumn = columns.find(col => 
-        col.toLowerCase().includes('email') || col.toLowerCase() === 'mail'
+      const emailColumn = columns.find(
+        (col) =>
+          col.toLowerCase().includes("email") || col.toLowerCase() === "mail"
       );
-      const recipientEmail = emailColumn ? row[emailColumn] : '';
+      const recipientEmail = emailColumn ? String(row[emailColumn] || "") : "";
 
       // Remplacer les variables
       const personalizedSubject = replaceVariables(subject, row);
       const personalizedMessage = replaceVariables(message, row);
 
-      // Simulation d'envoi
-      await new Promise(resolve => setTimeout(resolve, 500));
+      try {
+        // Appel à l'API backend
+        const response = await fetch("http://localhost:3000/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: recipientEmail,
+            subject: personalizedSubject,
+            text: personalizedMessage,
+          }),
+        });
 
-      // Pour le moment, on simule un succès
-      // Dans la réalité, cela devrait appeler une API backend
-      results.push({
-        email: recipientEmail,
-        status: 'success',
-        message: 'Email envoyé avec succès',
-      });
+        const data = await response.json();
+
+        if (response.ok) {
+          results.push({
+            email: recipientEmail,
+            status: "success",
+            message: "Email envoyé avec succès",
+          });
+        } else {
+          results.push({
+            email: recipientEmail,
+            status: "error",
+            message: data.error || "Erreur lors de l'envoi",
+          });
+        }
+      } catch (error) {
+        results.push({
+          email: recipientEmail,
+          status: "error",
+          message: error instanceof Error ? error.message : "Erreur réseau",
+        });
+      }
 
       setSentCount(i + 1);
       setSendResults([...results]);
@@ -117,9 +146,13 @@ const Index = () => {
     setIsComplete(true);
     setIsSending(false);
 
+    const successCount = results.filter((r) => r.status === "success").length;
+    const errorCount = results.filter((r) => r.status === "error").length;
+
     toast({
-      title: 'Envoi terminé',
-      description: `${results.filter(r => r.status === 'success').length} emails envoyés`,
+      title: "Envoi terminé",
+      description: `${successCount} emails envoyés avec succès, ${errorCount} erreurs`,
+      variant: errorCount > 0 ? "destructive" : "default",
     });
   };
 
@@ -134,15 +167,17 @@ const Index = () => {
             Envoi d'Emails Personnalisés
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Importez un fichier Excel et envoyez des emails personnalisés à vos contacts en quelques clics
+            Importez un fichier Excel et envoyez des emails personnalisés à vos
+            contacts en quelques clics
           </p>
         </div>
 
-        <Alert className="mb-6 border-amber-500/50 bg-amber-50 dark:bg-amber-900/10">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800 dark:text-amber-200">
-            <strong>Note importante :</strong> Pour sécuriser l'envoi d'emails avec vos identifiants SMTP,
-            une fonction backend est nécessaire. Actuellement en mode démonstration.
+        <Alert className="mb-6 border-green-500/50 bg-green-50 dark:bg-green-900/10">
+          <AlertCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            <strong>Service intégré :</strong> Les emails sont maintenant
+            envoyés via le service Node.js backend. Assurez-vous que le serveur
+            backend est en cours d'exécution sur le port 3000.
           </AlertDescription>
         </Alert>
 
@@ -152,7 +187,9 @@ const Index = () => {
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
                 1
               </div>
-              <h2 className="text-2xl font-semibold">Importer le fichier Excel</h2>
+              <h2 className="text-2xl font-semibold">
+                Importer le fichier Excel
+              </h2>
             </div>
             <FileUpload
               onFileSelect={handleFileSelect}
@@ -178,7 +215,9 @@ const Index = () => {
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
                     3
                   </div>
-                  <h2 className="text-2xl font-semibold">Personnaliser le message</h2>
+                  <h2 className="text-2xl font-semibold">
+                    Personnaliser le message
+                  </h2>
                 </div>
                 <MessageEditor
                   subject={subject}
@@ -197,7 +236,9 @@ const Index = () => {
                   className="px-12 py-6 text-lg shadow-glow hover:shadow-xl transition-all duration-300"
                 >
                   <Mail className="mr-2 h-5 w-5" />
-                  {isSending ? 'Envoi en cours...' : `Envoyer ${excelData.length} email(s)`}
+                  {isSending
+                    ? "Envoi en cours..."
+                    : `Envoyer ${excelData.length} email(s)`}
                 </Button>
               </div>
 
@@ -207,7 +248,9 @@ const Index = () => {
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
                       4
                     </div>
-                    <h2 className="text-2xl font-semibold">Résultats de l'envoi</h2>
+                    <h2 className="text-2xl font-semibold">
+                      Résultats de l'envoi
+                    </h2>
                   </div>
                   <SendProgress
                     totalEmails={excelData.length}

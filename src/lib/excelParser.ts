@@ -1,8 +1,12 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
+
+export interface ExcelRow {
+  [key: string]: unknown;
+}
 
 export interface ExcelData {
   columns: string[];
-  rows: any[];
+  rows: ExcelRow[];
 }
 
 export const parseExcelFile = async (file: File): Promise<ExcelData> => {
@@ -12,29 +16,29 @@ export const parseExcelFile = async (file: File): Promise<ExcelData> => {
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
+        const workbook = XLSX.read(data, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         if (jsonData.length === 0) {
-          reject(new Error('Le fichier Excel est vide'));
+          reject(new Error("Le fichier Excel est vide"));
           return;
         }
 
         const columns = Object.keys(jsonData[0] as object);
-        
+
         resolve({
           columns,
-          rows: jsonData as any[],
+          rows: jsonData as ExcelRow[],
         });
       } catch (error) {
-        reject(new Error('Erreur lors de la lecture du fichier Excel'));
+        reject(new Error("Erreur lors de la lecture du fichier Excel"));
       }
     };
 
     reader.onerror = () => {
-      reject(new Error('Erreur lors de la lecture du fichier'));
+      reject(new Error("Erreur lors de la lecture du fichier"));
     };
 
     reader.readAsBinaryString(file);
@@ -43,13 +47,28 @@ export const parseExcelFile = async (file: File): Promise<ExcelData> => {
 
 export const replaceVariables = (
   template: string,
-  data: Record<string, any>
+  data: Record<string, unknown>
 ): string => {
   let result = template;
-  
+
+  // Remplacer les variables avec les clés exactes
   Object.keys(data).forEach((key) => {
-    const regex = new RegExp(`{{${key}}}`, 'g');
-    result = result.replace(regex, String(data[key] || ''));
+    const regex = new RegExp(`{{${key}}}`, "gi"); // 'gi' pour insensible à la casse
+    result = result.replace(regex, String(data[key] || ""));
+  });
+
+  // Remplacer les variables avec les clés en minuscules (pour compatibilité)
+  Object.keys(data).forEach((key) => {
+    const lowerKey = key.toLowerCase();
+    const regex = new RegExp(`{{${lowerKey}}}`, "gi");
+    result = result.replace(regex, String(data[key] || ""));
+  });
+
+  // Remplacer les variables avec les clés sans espaces et en minuscules
+  Object.keys(data).forEach((key) => {
+    const normalizedKey = key.toLowerCase().replace(/\s+/g, "");
+    const regex = new RegExp(`{{${normalizedKey}}}`, "gi");
+    result = result.replace(regex, String(data[key] || ""));
   });
 
   return result;
